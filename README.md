@@ -7,6 +7,7 @@ CSVファイルから回答番号（1-10）を自動抽出するCLIツール
 - `inputs/`フォルダーのCSVファイルを一括処理
 - OpenAI APIで回答番号を抽出
 - 結果を`outputs/`フォルダーに保存
+- 処理済みファイルを`processed/`フォルダーに自動移動
 
 ## セットアップ
 
@@ -57,5 +58,6 @@ exam-answer-extractor/
 ├── extractor.py     # 抽出ロジック
 ├── inputs/          # CSVファイル配置
 ├── outputs/         # 結果出力
+├── processed/       # 処理済みファイル
 └── logs/            # 実行ログ
 ```

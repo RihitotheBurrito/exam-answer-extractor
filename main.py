@@ -81,7 +81,7 @@ def main():
             logger.info(f"\n📁 [{i}/{len(csv_files)}] 処理中: {csv_file.name}")
             
             try:
-                processed, errors = extractor.process_csv(csv_file)
+                processed, errors = extractor.process_csv_with_move(csv_file)
                 total_processed += processed
                 total_errors += errors
                 processed_files += 1

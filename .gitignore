@@ -4,6 +4,7 @@
 #local files
 inputs/*
 outputs/*
+processed/*
 
 # Logs
 logs/*

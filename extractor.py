@@ -7,6 +7,7 @@ import os
 import logging
 from pathlib import Path
 from typing import Tuple, Optional
+import shutil
 
 import pandas as pd
 from openai import OpenAI
@@ -131,6 +132,42 @@ class AnswerExtractor:
             
             # エラー時は空文字列を返して処理を継続
             return ""
+
+    def move_to_processed(self, input_path: Path) -> bool:
+        """
+        処理済みファイルをprocessed/フォルダーに移動
+        
+        Args:
+            input_path: 移動対象のファイルパス
+            
+        Returns:
+            bool: 移動成功時True, 失敗時False
+        """
+        try:
+            # processedディレクトリが存在しない場合は作成
+            processed_dir = Path("processed")
+            processed_dir.mkdir(exist_ok=True)
+            
+            # 移動先のパス
+            destination = processed_dir / input_path.name
+            
+            # 同名ファイルが既に存在する場合は番号を付ける
+            counter = 1
+            original_destination = destination
+            while destination.exists():
+                stem = original_destination.stem
+                suffix = original_destination.suffix
+                destination = processed_dir / f"{stem}_{counter}{suffix}"
+                counter += 1
+            
+            # ファイル移動
+            shutil.move(str(input_path), str(destination))
+            self.logger.info(f"📁 処理済みファイルを移動: {input_path.name} → processed/{destination.name}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"❌ ファイル移動エラー: {input_path.name} - {type(e).__name__}: {e}")
+            return False
     
     def process_csv(self, input_path: Path) -> Tuple[int, int]:
         """
@@ -213,6 +250,31 @@ class AnswerExtractor:
             extraction_rate = (extracted_count / len(df) * 100) if len(df) > 0 else 0
             
             self.logger.info(f"処理完了 - 成功: {success_count}/{processed_count} ({success_rate:.1f}%), 抽出成功: {extracted_count}/{len(df)} ({extraction_rate:.1f}%)")
+            
+            return processed_count, error_count
+            
+        except Exception as e:
+            self.logger.error(f"CSV処理エラー: {type(e).__name__}: {e}")
+            raise
+
+    def process_csv_with_move(self, input_path: Path) -> Tuple[int, int]:
+        """
+        CSVファイルを処理して成功時に処理済みフォルダーに移動
+        
+        Args:
+            input_path: 入力CSVファイルのパス
+            
+        Returns:
+            Tuple[int, int]: (処理済み件数, エラー件数)
+        """
+        try:
+            # CSV処理実行
+            processed_count, error_count = self.process_csv(input_path)
+            
+            # 処理成功時に移動
+            move_success = self.move_to_processed(input_path)
+            if not move_success:
+                self.logger.warning(f"⚠️  ファイル移動に失敗しましたが、処理は完了しています: {input_path.name}")
             
             return processed_count, error_count
             
